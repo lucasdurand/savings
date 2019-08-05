@@ -50,23 +50,37 @@ print(len(interest)/12, " years")
 # # Multiple Accounts
 
 # %%
+import pandas as pd
+import datetime
+
+# %%
+me = { 
+    'salary':100000,
+    'expected_raise_pct':0.05,
+    'salary_cap':130000
+}
+
+# %%
 accounts_definition = [
     {
         'name':'basic',
         'rate': 0.05*0.01,
         'starting_balance': 2000,
-        'monthly_contribution': 0,
+        'monthly_contribution': 50,
         'max_value': 10000 #hold at this value
     },
     {
         'name':'tfsa',
+        'registered':True,
         'rate': 3*0.01,
         'starting_balance': 20000,
-        'monthly_contribution': 250,
+        'monthly_contribution': 500,
         'contribution_room': 27000,
+        'yearly_contrib': 5000 # contrib room added each year
     },
     {
         'name':'rrsp',
+        'registered':True,
         'rate': 3*0.01,
         'starting_balance': 0,
         'monthly_contribution': 50,
@@ -117,6 +131,10 @@ for account in accounts_definition:
             unregistered_balance[m:] += monthly_contrib
         interest[m] = balance[m] * account['rate']/12
         balance[m+1:] += interest[m]
+        if m and m%12 == 0: # Yearly
+            contrib_room += account.get('yearly_contrib', 0)
+            if not account.get('registered'):
+                balance[m+1] -= sum(interest[m-12:m]) * 0.3 # TODO: what's capital gains tax?
     accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'month':pd.np.arange(len(interest))})]
 
 # %% [markdown]
@@ -137,6 +155,11 @@ accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':bal
 # %%
 cfs = pd.concat(accts)
 
+# %%
+import dateutil
+import cufflinks as cf
+cf.go_offline()
+
 
 # %%
 def add_months(save_df):
@@ -148,34 +171,14 @@ add_months(cfs)
 cfs_by_acct = cfs.pivot(index='date', columns='acct', values='balance')
 
 # %%
-#cfs_by_acct.iplot(title='Your Savings At Work!', kind='area', fill='tonexty')
-
-# %%
-cfs_by_acct.iplot(title='Your Savings At Work!')
+cfs_by_acct['total'] = cfs_by_acct.sum(axis=1)
 
 # %% [markdown]
 # # Visualize
+#
+# ## TODO:
+#
+# - We over-contribute to RRSP, if we set a goal and a timeline we can make sure we don't hit the 35k limit before then (although it's not really terrible to have money left in it just from interest)
 
 # %%
-import dateutil.relativedelta
-
-import pandas as pd
-import cufflinks as cf
-cf.go_offline()
-
-import datetime
-
-# %%
-dates = [datetime.date.today() + dateutil.relativedelta.relativedelta(months=m) for m in range(50*12)]
-
-# %%
-save_df = pd.DataFrame({'savings':savings,'interest':interest})
-def add_months(save_df):
-    save_df.index.name = 'month'
-    save_df['date'] = [datetime.date.today() + dateutil.relativedelta.relativedelta(months=m) for m in save_df.index.values]
-
-
-# %%
-save_df.iplot(x='date',y='savings', secondary_y='interest', title='TD Savings Accounts Work!')
-
-# %%
+cfs_by_acct.iplot(title='Your Savings At Work!')
