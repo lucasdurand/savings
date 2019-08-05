@@ -182,3 +182,8 @@ cfs_by_acct['total'] = cfs_by_acct.sum(axis=1)
 
 # %%
 cfs_by_acct.iplot(title='Your Savings At Work!')
+
+# %% [markdown]
+# # Dynamic Allocation
+#
+# We really don't save money this way (defined amounts every month). In reality we would be better to set up a budget and allocate any leftover money to savings that is above and beyond our spending habits.
