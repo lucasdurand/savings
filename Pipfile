@@ -13,6 +13,7 @@ plotly = "*"
 dash-core-components = "*"
 dash-html-components = "*"
 dash = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.6"
