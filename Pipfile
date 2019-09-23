@@ -10,7 +10,9 @@ jupytext = "*"
 jupyter = "*"
 pandas = "*"
 plotly = "*"
-cufflinks = "*"
+dash-core-components = "*"
+dash-html-components = "*"
+dash = "*"
 
 [requires]
 python_version = "3.6"
