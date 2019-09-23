@@ -563,3 +563,5 @@ app.layout = html.Div(
 #
 # - Value on the left is changed (personal info)
 # - Clicked onto the "savings" tab
+#
+# We also want to make it easier(/obvious) to switch to the "Savings" tab to view the results. MAYBE IT SHOULD BE CALLED RESULTS?
