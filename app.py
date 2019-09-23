@@ -30,7 +30,7 @@ import dash_html_components as html
 app = dash.Dash(__name__)
 app.title = "Savings"
 
-# %% {"code_folding": [48]}
+# %% {"code_folding": [0]}
 acct_info = html.Div(
     [
         html.Div([
@@ -310,7 +310,7 @@ summary_stats = [
     ),
 ]
 
-# %% {"code_folding": [3, 22]}
+# %% {"code_folding": []}
 # Create app layout
 app.layout = html.Div(
     [
@@ -401,7 +401,7 @@ app.layout = html.Div(
                             className="dcc_control"
                         ),
                         html.H6(
-                                "We are going to invest all of your unspent money each month. Where it ends up depends on some limits and weights you define below."
+                                "We are going to invest all of your unspent money each month. Where it ends up depends on some limits and weights you define under 'Accounts'."
                         ),                 
                     ],
                     className="pretty_container four columns"
