@@ -505,7 +505,7 @@ app.layout = html.Div(
                             className="control_label"
                         ),
                         dcc.Input(
-                            id='biweekly_speed',
+                            id='biweekly_spend',
                             type="number",
                             placeholder="biweekly spend ($)",
                             className="dcc_control"
@@ -565,3 +565,37 @@ app.layout = html.Div(
 # - Clicked onto the "savings" tab
 #
 # We also want to make it easier(/obvious) to switch to the "Savings" tab to view the results. MAYBE IT SHOULD BE CALLED RESULTS?
+
+# %%
+from dash.dependencies import Output, Input, State
+
+# %%
+personal_info_inputs = [
+    Input("biweekly_income","value"),
+    Input("expected_raise_pct","value"),
+    Input("salary_cap_pct","value"),
+    Input("biweekly_spend","value"),
+    Input("monthly_rent","value")
+]
+
+# %%
+acct_info_ids = [child.id for kid in acct_info.children for child in kid.children if type(child)==dcc.Input]
+
+account_info_inputs = [ State(component_id,"value") for component_id in acct_info_ids]
+
+# %%
+@app.callback(
+    Output(component_id="savings_graph", component_property="figure"),
+    [
+        *personal_info_inputs,
+        Input(component_id="input-tabs", component_property="value")
+    ],
+    [
+        *account_info_inputs,
+        State(component_id="savings_graph", component_property="figure")
+    ]
+)
+def calculate_cashflows(**kwargs):
+    print(kwargs)
+    # only redraw if there's a change?
+    return figure
