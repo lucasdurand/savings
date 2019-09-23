@@ -6,153 +6,12 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
-
-# %%
-import pandas as pd
-import plotly.express as px
-import datetime
-
-
-# %%
-me = { 
-    'biweekly_income': 2500,
-    'expected_raise_pct': 0.05,
-    'salary_cap_pct': 0.30,
-    'biweekly_spend': 1500,
-    'monthly_rent': 1627
-}
-
-accounts_definition = [
-    {
-        'name':'chequing',
-        'rate': 0.05*0.01,
-        'starting_balance': 2000,
-        'max_value': 5000, #hold at this value,
-        'biweekly_contribution':50,
-    },
-    {
-        'name':'tfsa',
-        'registered':True,
-        'rate': 5*0.01,
-        'starting_balance': 20000,
-        'biweekly_contribution': 300,
-        'contribution_room': 27000,
-        'yearly_contrib': 5000 # contrib room added each year
-    },
-    {
-        'name':'rrsp',
-        'registered':True,
-        'rate': 5*0.01,
-        'starting_balance': 0,
-        'biweekly_contribution': 0,
-        'max_value': 35000 #for first-time home buy
-    },
-    {
-        'name':'high_interest_savings',
-        'rate': 2*0.01,
-        'starting_balance': 2000,
-        'max_value': 20000, #hold at this value
-        'biweekly_contribution':300
-    }
-]
-
-unregistered = {
-        'name':'unregistered',
-        'rate': 3*0.01,
-        'starting_balance': 0,
-    }
-
-BW = 3 * 26 # years in 2-week chunks 
-
-## Income
-
-#Pure salary income, with option for it to grow annualy
-
-income = pd.np.ones(BW)*me.get("biweekly_income")
-for year in range(BW//26):
-    if me.get("salary_cap_pct") and (1 + me.get("salary_cap_pct")) * me.get("biweekly_income") < income[year*26]:
-        break
-    else:
-        income[year*26:]*= 1 + me.get("expected_raise_pct",0)
-
-unregistered_balance = pd.np.ones(BW)*unregistered.get('starting_balance',0)
-
-spending = pd.np.ones(BW) * me.get("biweekly_spend",0)
-rent = pd.np.ones(BW) * me.get("monthly_rent",0) * 12/26 # biweekly rent?
-
-income -= spending + rent # this is our takehome
-
-invest = sum(acct.get("biweekly_contribution", 0) for acct in accounts_definition)# amount invested biweekly
-
-for account in accounts_definition:
-    amount = account.get("biweekly_contribution",0)/invest
-    account['ratio'] = amount
-
-### Rules for distribution
-accts = []
-for account in accounts_definition:
-    balance = pd.np.ones(BW)*account['starting_balance']
-    contribution = pd.np.zeros(BW)
-    interest = pd.np.zeros(BW)
-    notes = [""]*BW
-    
-    contrib_room = account.get('contribution_room',pd.np.inf)
-    
-    for m in range(BW-1): # project forward
-        amount = account.get("ratio") * income[m]
-        # monthly contributions
-        if balance[m] < account.get('max_value',pd.np.inf) and contribution.sum() < contrib_room :
-            contribution[m] += amount
-            balance[m:] += amount
-        else: # add to another account (just unregistered for now)
-            notes[m]= "Contrib Limit"
-            unregistered_balance[m:] += amount
-        interest[m] = balance[m] * account['rate']/26
-        balance[m+1:] += interest[m]
-        if m and m%26 == 0: # Yearly
-            contrib_room += account.get('yearly_contrib', 0)
-            if not account.get('registered'):
-                notes[m+1] = "Taxes!"
-                balance[m+1] -= sum(interest[m-26:m]) * 0.4 # TODO: what's capital gains tax?
-    accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
-
-### Do the unregistered account
-
-interest = pd.np.zeros(BW)
-balance = unregistered_balance
-account = unregistered
-notes = [""]*BW
-for m in range(BW-1): # project forward
-    # monthly contributions
-    interest[m] = balance[m] * unregistered['rate']/26
-    balance[m+1:] += interest[m]
-    if m and m%26 == 0: # TAXES
-        notes[m+1] = "Taxes!"
-        balance[m+1] -= sum(interest[m-26:m]) * 0.3 # TODO: what's capital gains tax?
-accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
-
-cfs = pd.concat(accts, sort=False)
-
-import dateutil
-def add_weeks(save_df):
-    save_df.index.name = 'biweek'
-    save_df['date'] = [datetime.date.today() + dateutil.relativedelta.relativedelta(weeks=int(2*m)) for m in save_df.index.values]
-
-add_weeks(cfs)
-
-#total = cfs.groupby("date", as_index=False)['balance'].sum()
-#total['acct'] = "total"
-#cfs = pd.concat([cfs,total], sort=False)
-
-import plotly.express as px
-graph = px.area(cfs, x="date", y="balance", color="acct", title = "Your Savings At Work!")
-graph
 
 # %% [markdown]
 # # Dynamic Allocation
@@ -171,7 +30,7 @@ import dash_html_components as html
 app = dash.Dash(__name__)
 app.title = "Savings"
 
-# %% {"code_folding": [116]}
+# %% {"code_folding": [48]}
 acct_info = html.Div(
     [
         html.Div([
@@ -204,9 +63,9 @@ acct_info = html.Div(
                     className="control_label"
                 ),
                 dcc.Input(
-                    id='hi-contrib-weight',
+                    id='hi-starting',
                     type="number",
-                    placeholder="contribution weight",
+                    placeholder="current balance",
                     className="dcc_control"
                 ),                 
                 html.P(
@@ -217,6 +76,20 @@ acct_info = html.Div(
                     id='hi-limit',
                     type="number",
                     placeholder="hold the value here",
+                    className="dcc_control"
+                ),
+            html.H4(
+                "Unregistered",
+                style={"padding-top":"15px"}
+            ),
+                html.P(
+                    "Expected Return"
+                ),
+                dcc.Input(
+                    id="unreg-interest",
+                    type="number",
+                    value=3,
+                    placeholder="interest (%)",
                     className="dcc_control"
                 ),
         ], className="one-third column"),
@@ -230,7 +103,7 @@ acct_info = html.Div(
                     className="control_label"
                 ),
                 dcc.Input(
-                    id='tfsa-contrib',
+                    id='tfsa-contrib-weight',
                     type="number",
                     placeholder="contribution weight",
                     className="dcc_control"
@@ -250,9 +123,9 @@ acct_info = html.Div(
                     className="control_label"
                 ),
                 dcc.Input(
-                    id='tfsa-contrib-weight',
+                    id='tfsa-starting',
                     type="number",
-                    placeholder="contribution weight",
+                    placeholder="current balance",
                     className="dcc_control"
                 ),                 
                 html.P(
@@ -318,9 +191,9 @@ acct_info = html.Div(
                     className="control_label"
                 ),
                 dcc.Input(
-                    id='rrsp-contrib-weight',
+                    id='rrsp-starting',
                     type="number",
-                    placeholder="contribution weight",
+                    placeholder="current balance",
                     className="dcc_control"
                 ),                 
                 html.P(
@@ -361,18 +234,18 @@ acct_info = html.Div(
     style={"padding-top":"20px"}
 )
 
-# %%
+# %% {"code_folding": []}
 main_view = dcc.Tabs(
     [
         dcc.Tab(label="Accounts", children=[
             acct_info
         ]),
-        dcc.Tab(label="Savings", children=[
+        dcc.Tab(label="Savings", value="savings", children=[
             html.Div(
                 [
                     dcc.Graph(
                         id='savings_graph',
-                        figure=graph                                
+                        figure=None
                     )
                 ],
                 id="countGraphContainer",
@@ -384,7 +257,7 @@ main_view = dcc.Tabs(
     id="input-tabs",
 )
 
-# %%
+# %% {"code_folding": []}
 summary_stats = [
     html.Div(
         [
@@ -395,53 +268,49 @@ summary_stats = [
                 children=["$0"]
             )
         ],
-        id="total-summary",
         className="pretty_container",
         style={"flex":"4"}
     ),
 
     html.Div(
         [
-            html.P("Savings"),
+            html.P("Avg Saved"),
             html.H6(
-                id="total-hi-savings",
+                id="avg-saved",
                 className="info_text",
                 children=["$0"]
             )
         ],
-        id="hi-summary",
         className="pretty_container",
         style={"flex":"4"}
     ),
     html.Div(
         [
-            html.P("TFSA"),
+            html.P("Capital Gains"),
             html.H6(
-                id="total-tfsa-savings",
+                id="total-tax",
                 className="info_text",
                 children=["$0"]
             )
         ],
-        id="tfsa-summary",
         className="pretty_container",
         style={"flex":"4"}
     ),
     html.Div(
         [
-            html.P("RRSP"),
+            html.P("Rent"),
             html.H6(
-                id="total-rrsp-savings",
+                id="total-rent",
                 className="info_text",
                 children=["$0"]
             )
         ],
-        id="rrsp-summary",
         className="pretty_container",
         style={"flex":"4"}
     ),
 ]
 
-# %% {"code_folding": [3, 89, 102, 114, 126]}
+# %% {"code_folding": [3, 22]}
 # Create app layout
 app.layout = html.Div(
     [
@@ -512,13 +381,23 @@ app.layout = html.Div(
                         ),
 
                         html.P(
-                            "And what's rent every month?",
+                            "What's rent every month?",
                             className="control_label"
                         ),
                         dcc.Input(
                             id='monthly_rent',
                             type="number",
                             placeholder="monthly rent ($)",
+                            className="dcc_control"
+                        ),
+                        html.P(
+                            "And how many years should be projected?",
+                            className="control_label"
+                        ),
+                        dcc.Input(
+                            id='projected_years',
+                            type="number",
+                            placeholder="years",
                             className="dcc_control"
                         ),
                         html.H6(
@@ -575,7 +454,8 @@ personal_info_inputs = [
     Input("expected_raise_pct","value"),
     Input("salary_cap_pct","value"),
     Input("biweekly_spend","value"),
-    Input("monthly_rent","value")
+    Input("monthly_rent","value"),
+    Input("projected_years","value")
 ]
 
 # %%
@@ -585,7 +465,13 @@ account_info_inputs = [ State(component_id,"value") for component_id in acct_inf
 
 # %%
 @app.callback(
-    Output(component_id="savings_graph", component_property="figure"),
+    [
+        Output(component_id="savings_graph", component_property="figure"),
+        Output(component_id="total-saved", component_property="children"),
+        Output(component_id="avg-saved", component_property="children"),
+        Output(component_id="total-tax", component_property="children"),
+        Output(component_id="total-rent", component_property="children"),
+    ],
     [
         *personal_info_inputs,
         Input(component_id="input-tabs", component_property="value")
@@ -595,7 +481,150 @@ account_info_inputs = [ State(component_id,"value") for component_id in acct_inf
         State(component_id="savings_graph", component_property="figure")
     ]
 )
-def calculate_cashflows(**kwargs):
-    print(kwargs)
-    # only redraw if there's a change?
-    return figure
+def calculate_cashflows(
+    biweekly_income,expected_raise_pct,salary_cap_pct,biweekly_spend,monthly_rent,projected_years,
+    tab,
+    hi_contrib,hi_interest,hi_starting,hi_limit, unreg_interest,
+    tfsa_contrib,tfsa_interest,tfsa_starting,tfsa_limit,tfsa_contrib_room,tfsa_contrib_reset,
+    rrsp_contrib,rrsp_interest,rrsp_starting,rrsp_limit,rrsp_contrib_room,rrsp_contrib_reset,
+    figure
+):
+    if tab != "savings": 
+        return [figure, "$0", "$0", "$0", "$0"]
+    
+    me = { 
+        'biweekly_income': (biweekly_income or 0),
+        'expected_raise_pct': (expected_raise_pct or 0) * 0.01,
+        'salary_cap_pct': (salary_cap_pct or 0) * 0.01,
+        'biweekly_spend': (biweekly_spend or 0),
+        'monthly_rent': (monthly_rent or 0)
+    }
+    
+    accounts_definition = [
+        {
+            'name':'tfsa',
+            'registered':True,
+            'rate': (tfsa_interest or 0)*0.01,
+            'starting_balance': (tfsa_starting or 0),
+            'biweekly_contribution': (tfsa_contrib or 0),
+            'contribution_room': (tfsa_contrib_room  or 0),
+            'max_value': tfsa_limit or pd.np.inf,
+            'yearly_contrib': tfsa_contrib_reset or 0 # contrib room added each year
+        },
+        {
+            'name':'rrsp',
+            'registered':True,
+            'rate': (rrsp_interest or 0)*0.01,
+            'starting_balance': rrsp_starting  or 0,
+            'biweekly_contribution': rrsp_contrib  or 0,
+            'max_value': rrsp_limit or pd.np.inf, #for first-time home buy
+            'contribution_room': rrsp_contrib_room  or 0,
+            'yearly_contrib':rrsp_contrib_reset or 0
+        },
+        {
+            'name':'high_interest_savings',
+            'rate': (hi_interest or 0)*0.01,
+            'starting_balance': hi_starting or 0,
+            'max_value': hi_limit or pd.np.inf, #hold at this value
+            'biweekly_contribution':hi_contrib or 0
+        }
+    ]
+    
+    unregistered = {
+            'name':'unregistered',
+            'rate': (unreg_interest or 0)*0.01,
+            'starting_balance': 0,
+        }
+
+    BW = projected_years * 26 if projected_years else 5 * 26 # years in 2-week chunks 
+
+    ## Income
+
+    #Pure salary income, with option for it to grow annualy
+
+    income = pd.np.ones(BW)*me.get("biweekly_income", 0)
+    for year in range(BW//26):
+        if me.get("salary_cap_pct") and (1 + me.get("salary_cap_pct", 0)) * me.get("biweekly_income", 0) < income[year*26]:
+            break
+        else:
+            income[year*26:]*= 1 + me.get("expected_raise_pct",0)
+
+    unregistered_balance = pd.np.ones(BW)*unregistered.get('starting_balance',0)
+
+    spending = pd.np.ones(BW) * me.get("biweekly_spend",0)
+    rent = pd.np.ones(BW) * me.get("monthly_rent",0) * 12/26 # biweekly rent?
+
+    income -= spending + rent # this is our takehome
+
+    invest = sum([acct.get("biweekly_contribution") for acct in accounts_definition])# amount invested biweekly
+
+    for account in accounts_definition:
+        amount = account.get("biweekly_contribution",0)/invest if invest else 0
+        account['ratio'] = amount
+
+    ### Rules for distribution
+    accts = []
+    taxes = 0
+    for account in accounts_definition:
+        balance = pd.np.ones(BW)*account.get('starting_balance',0)
+        contribution = pd.np.zeros(BW)
+        interest = pd.np.zeros(BW)
+        notes = [""]*BW
+
+        contrib_room = account.get('contribution_room',pd.np.inf)
+
+        for m in range(BW-1): # project forward
+            amount = account.get("ratio", 0) * income[m]
+            # monthly contributions
+            if balance[m] < account.get('max_value',pd.np.inf) and contribution.sum() < contrib_room :
+                contribution[m] += amount
+                balance[m:] += amount
+            else: # add to another account (just unregistered for now)
+                notes[m]= "Contrib Limit"
+                unregistered_balance[m:] += amount
+            interest[m] = balance[m] * account['rate']/26
+            balance[m+1:] += interest[m]
+            if m and m%26 == 0: # Yearly
+                contrib_room += account.get('yearly_contrib', 0)
+                if not account.get('registered'):
+                    notes[m+1] = "Taxes!"
+                    tax = sum(interest[m-26:m]) * 0.4
+                    taxes += tax
+                    balance[m+1] -= tax # TODO: what's capital gains tax?
+        accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
+
+    ### Do the unregistered account
+
+    interest = pd.np.zeros(BW)
+    balance = unregistered_balance
+    account = unregistered
+    notes = [""]*BW
+    for m in range(BW-1): # project forward
+        # monthly contributions
+        interest[m] = balance[m] * unregistered['rate']/26
+        balance[m+1:] += interest[m]
+        if m and m%26 == 0: # TAXES
+            notes[m+1] = "Taxes!"
+            tax = sum(interest[m-26:m]) * 0.4
+            taxes += tax
+            balance[m+1] -= tax # TODO: what's capital gains tax?
+    accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
+
+    cfs = pd.concat(accts, sort=False)
+
+    import dateutil
+    def add_weeks(save_df):
+        save_df.index.name = 'biweek'
+        save_df['date'] = [datetime.date.today() + dateutil.relativedelta.relativedelta(weeks=int(2*m)) for m in save_df.index.values]
+
+    add_weeks(cfs)
+    
+    graph = px.area(cfs, x="date", y="balance", color="acct", title = "Your Savings At Work!")
+    
+    # other stats
+    last = cfs[cfs.date == cfs.date.max()]
+    total = last.balance.sum().astype(int)
+    taxes = int(taxes)
+    saved = int(income.mean())
+    total_rent = rent.sum().astype(int)
+    return graph, f"${total}", f"${saved}", f"${taxes}", f"${total_rent}"
