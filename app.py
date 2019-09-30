@@ -247,7 +247,7 @@ main_view = dcc.Tabs(
         dcc.Tab(label="Accounts", children=[
             acct_info
         ]),
-        dcc.Tab(label="Savings", value="savings", style={"width":"calc(100%-50px)"}, children=[
+        dcc.Tab(label="Savings", value="savings", children=[
             html.Div(
                 [
                     dcc.Graph(
