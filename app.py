@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -30,7 +31,7 @@ import dash_html_components as html
 app = dash.Dash(__name__)
 app.title = "Savings"
 
-# %% {"code_folding": [0]}
+# %% {"code_folding": []}
 acct_info = html.Div(
     [
         html.Div([
@@ -44,6 +45,7 @@ acct_info = html.Div(
                 dcc.Input(
                     id='hi-contrib',
                     type="number",
+                    value=1,
                     placeholder="contribution weight",
                     className="dcc_control"
                 ),
@@ -245,30 +247,29 @@ main_view = dcc.Tabs(
                 [
                     dcc.Graph(
                         id='savings_graph',
-                        figure=None
+                        figure=px.area(pd.DataFrame())
                     )
                 ],
                 id="countGraphContainer",
 
-                style={"minHeight":"400px"}
+                style={"minHeight":"600px"}
             )
         ])
     ],
     id="input-tabs",
 )
 
-# %% {"code_folding": []}
+# %% {"code_folding": [0]}
 summary_stats = [
     html.Div(
         [
             html.P("Total Saved"),
             html.H6(
                 id="total-saved",
-                className="info_text",
-                children=["$0"]
+                className="info_text"
             )
         ],
-        className="pretty_container",
+        className="mini_container",
         style={"flex":"4"}
     ),
 
@@ -277,23 +278,21 @@ summary_stats = [
             html.P("Avg Saved"),
             html.H6(
                 id="avg-saved",
-                className="info_text",
-                children=["$0"]
+                className="info_text"
             )
         ],
-        className="pretty_container",
+        className="mini_container",
         style={"flex":"4"}
     ),
     html.Div(
         [
-            html.P("Capital Gains"),
+            html.P("Capital Gains Tax"),
             html.H6(
                 id="total-tax",
-                className="info_text",
-                children=["$0"]
+                className="info_text"
             )
         ],
-        className="pretty_container",
+        className="mini_container",
         style={"flex":"4"}
     ),
     html.Div(
@@ -301,11 +300,10 @@ summary_stats = [
             html.P("Rent"),
             html.H6(
                 id="total-rent",
-                className="info_text",
-                children=["$0"]
+                className="info_text"
             )
         ],
-        className="pretty_container",
+        className="mini_container",
         style={"flex":"4"}
     ),
 ]
@@ -401,7 +399,8 @@ app.layout = html.Div(
                             className="dcc_control"
                         ),
                         html.H6(
-                                "We are going to invest all of your unspent money each month. Where it ends up depends on some limits and weights you define under 'Accounts'."
+
+                            "We are going to invest all of your unspent money each month. Where it ends up depends on some limits and weights you define under 'Accounts'."
                         ),                 
                     ],
                     className="pretty_container four columns"
@@ -410,8 +409,8 @@ app.layout = html.Div(
                     [
                         html.Div(
                             summary_stats,
-                            id="infoContainer",
-                            className="row"
+                            id="info-container",
+                            className="row container-display"
                         ),
                         html.Div(className="pretty_container", children=
                              [
@@ -419,18 +418,14 @@ app.layout = html.Div(
                              ]
                         )
                     ],
-                    id="rightCol",
+                    id="right-column",
                     className="eight columns"
                 )
             ],
-            className="row",
+            className="row flex-display",
             style={"display":"flex","flex":3}
         )],
-   id="mainContainer",
-    style={
-        "display": "flex",
-        "flex-direction": "column"
-    }
+   id="main-container"
 )
 
 # %% [markdown]
@@ -463,7 +458,7 @@ acct_info_ids = [child.id for kid in acct_info.children for child in kid.childre
 
 account_info_inputs = [ State(component_id,"value") for component_id in acct_info_ids]
 
-# %%
+# %% {"code_folding": [0, 17, 26, 29, 37, 67]}
 @app.callback(
     [
         Output(component_id="savings_graph", component_property="figure"),
@@ -489,8 +484,9 @@ def calculate_cashflows(
     rrsp_contrib,rrsp_interest,rrsp_starting,rrsp_limit,rrsp_contrib_room,rrsp_contrib_reset,
     figure
 ):
+    
     if tab != "savings": 
-        return [figure, "$0", "$0", "$0", "$0"]
+        return [figure, "$—", "$—", "$—", "$—"]
     
     me = { 
         'biweekly_income': (biweekly_income or 0),
@@ -588,7 +584,7 @@ def calculate_cashflows(
                 contrib_room += account.get('yearly_contrib', 0)
                 if not account.get('registered'):
                     notes[m+1] = "Taxes!"
-                    tax = sum(interest[m-26:m]) * 0.4
+                    tax = sum(interest[m-26:m]) * 0.5 * 0.53
                     taxes += tax
                     balance[m+1] -= tax # TODO: what's capital gains tax?
         accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
@@ -605,7 +601,7 @@ def calculate_cashflows(
         balance[m+1:] += interest[m]
         if m and m%26 == 0: # TAXES
             notes[m+1] = "Taxes!"
-            tax = sum(interest[m-26:m]) * 0.4
+            tax = sum(interest[m-26:m]) * 0.5 * 0.53
             taxes += tax
             balance[m+1] -= tax # TODO: what's capital gains tax?
     accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
