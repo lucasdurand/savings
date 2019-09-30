@@ -1,4 +1,5 @@
-var graphToResize = document.getElementById('savings_graph');
+// +
+/*var graphToResize = document.getElementById('savings_graph');
 
 var resized = false;
 
@@ -19,10 +20,14 @@ var triggerResize = function() {
       resized = true;
   }
 }
-window.onload = function(){
-  triggerResize();
-}
+//
+// window.onload = function(){
+//   triggerResize();
+// }
+*/
+// -
 
+/*
 if (!window.dash_clientside) {
   window.dash_clientside = {};
 }
@@ -36,4 +41,4 @@ window.dash_clientside.clientside = {
     return null;
   }
 };
-
+*/

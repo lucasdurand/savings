@@ -7,7 +7,6 @@
     border-top-color: #0a5400 !important;
 }
 
-
 .js-plotly-plot .plotly .modebar {
   padding-top: 5%;
   margin-right: 3.5%;
@@ -142,12 +141,7 @@ body {
   flex: 3;
 }
 
-#main-container {
+#mainContainer {
   display: flex;
   flex-direction: column;
-}
-
-#pie_graph > div > div > svg:nth-child(3) > g.infolayer > g.legend {
-  pointer-events: all;
-  transform: translate(30px, 349px);
 }

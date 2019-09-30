@@ -28,10 +28,15 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 
-app = dash.Dash(__name__)
+app = dash.Dash(
+    __name__,
+    meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+    ]
+)
 app.title = "Savings"
 
-# %% {"code_folding": []}
+# %% {"code_folding": [0]}
 acct_info = html.Div(
     [
         html.Div([
@@ -236,7 +241,7 @@ acct_info = html.Div(
     style={"padding-top":"20px"}
 )
 
-# %% {"code_folding": []}
+# %% {"code_folding": [0]}
 main_view = dcc.Tabs(
     [
         dcc.Tab(label="Accounts", children=[
@@ -308,7 +313,7 @@ summary_stats = [
     ),
 ]
 
-# %% {"code_folding": []}
+# %% {"code_folding": [24, 98, 103]}
 # Create app layout
 app.layout = html.Div(
     [
@@ -423,9 +428,8 @@ app.layout = html.Div(
                 )
             ],
             className="row flex-display",
-            style={"display":"flex","flex":3}
         )],
-   id="main-container"
+   id="mainContainer"
 )
 
 # %% [markdown]
