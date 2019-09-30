@@ -321,10 +321,20 @@ app.layout = html.Div(
             [
                 html.Div(
                     [
-                        html.H2(
-                            'When can I buy that house?',
+                        html.Div(
+                            [
+                                html.Img(
+                                    src="assets/stonks.png",
+                                    height=75,
+                                    className="flex-display",
+                                    style={"marginRight":"5px"}
+                                ),
+                                html.H2(
+                                    'When can I buy that house?',
+                                    className="flex-display",
 
-                        ),
+                                ),                             
+                            ],className="flex-display"),
                         html.H4(
                             'Investment Calculator',
                         )
