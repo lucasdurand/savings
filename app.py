@@ -499,8 +499,8 @@ def calculate_cashflows(
     figure
 ):
     
-    if tab != "savings": 
-        return [figure, "$—", "$—", "$—", "$—"]
+    #if tab != "savings": 
+    #    return [figure, "$—", "$—", "$—", "$—"]
     
     me = { 
         'biweekly_income': (biweekly_income or 0),
