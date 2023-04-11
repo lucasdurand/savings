@@ -24,11 +24,9 @@ import pandas as pd
 import plotly.express as px
 import datetime
 
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import Dash, dcc, html
 
-app = dash.Dash(
+app = Dash(
     __name__,
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"}
@@ -455,7 +453,7 @@ app.layout = html.Div(
 # We also want to make it easier(/obvious) to switch to the "Savings" tab to view the results. MAYBE IT SHOULD BE CALLED RESULTS?
 
 # %%
-from dash.dependencies import Output, Input, State
+from dash import Output, Input, State
 
 # %%
 personal_info_inputs = [
@@ -638,3 +636,5 @@ def calculate_cashflows(
     saved = int(income.mean())
     total_rent = rent.sum().astype(int)
     return graph, f"${total}", f"${saved}", f"${taxes}", f"${total_rent}"
+
+server = app.server
