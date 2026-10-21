@@ -20,6 +20,7 @@
 # We really don't save money this way (defined amounts every month). In reality we would be better to set up a budget and allocate any leftover money to savings that is above and beyond our spending habits.
 
 # %%
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import datetime
@@ -516,7 +517,7 @@ def calculate_cashflows(
             'starting_balance': (tfsa_starting or 0),
             'biweekly_contribution': (tfsa_contrib or 0),
             'contribution_room': (tfsa_contrib_room  or 0),
-            'max_value': tfsa_limit or pd.np.inf,
+            'max_value': tfsa_limit or np.inf,
             'yearly_contrib': tfsa_contrib_reset or 0 # contrib room added each year
         },
         {
@@ -525,7 +526,7 @@ def calculate_cashflows(
             'rate': (rrsp_interest or 0)*0.01,
             'starting_balance': rrsp_starting  or 0,
             'biweekly_contribution': rrsp_contrib  or 0,
-            'max_value': rrsp_limit or pd.np.inf, #for first-time home buy
+            'max_value': rrsp_limit or np.inf, #for first-time home buy
             'contribution_room': rrsp_contrib_room  or 0,
             'yearly_contrib':rrsp_contrib_reset or 0
         },
@@ -533,7 +534,7 @@ def calculate_cashflows(
             'name':'high_interest_savings',
             'rate': (hi_interest or 0)*0.01,
             'starting_balance': hi_starting or 0,
-            'max_value': hi_limit or pd.np.inf, #hold at this value
+            'max_value': hi_limit or np.inf, #hold at this value
             'biweekly_contribution':hi_contrib or 0
         }
     ]
@@ -550,17 +551,17 @@ def calculate_cashflows(
 
     #Pure salary income, with option for it to grow annualy
 
-    income = pd.np.ones(BW)*me.get("biweekly_income", 0)
+    income = np.ones(BW)*me.get("biweekly_income", 0)
     for year in range(BW//26):
         if me.get("salary_cap_pct") and (1 + me.get("salary_cap_pct", 0)) * me.get("biweekly_income", 0) < income[year*26]:
             break
         else:
             income[year*26:]*= 1 + me.get("expected_raise_pct",0)
 
-    unregistered_balance = pd.np.ones(BW)*unregistered.get('starting_balance',0)
+    unregistered_balance = np.ones(BW)*unregistered.get('starting_balance',0)
 
-    spending = pd.np.ones(BW) * me.get("biweekly_spend",0)
-    rent = pd.np.ones(BW) * me.get("monthly_rent",0) * 12/26 # biweekly rent?
+    spending = np.ones(BW) * me.get("biweekly_spend",0)
+    rent = np.ones(BW) * me.get("monthly_rent",0) * 12/26 # biweekly rent?
 
     income -= spending + rent # this is our takehome
 
@@ -574,17 +575,17 @@ def calculate_cashflows(
     accts = []
     taxes = 0
     for account in accounts_definition:
-        balance = pd.np.ones(BW)*account.get('starting_balance',0)
-        contribution = pd.np.zeros(BW)
-        interest = pd.np.zeros(BW)
+        balance = np.ones(BW)*account.get('starting_balance',0)
+        contribution = np.zeros(BW)
+        interest = np.zeros(BW)
         notes = [""]*BW
 
-        contrib_room = account.get('contribution_room',pd.np.inf)
+        contrib_room = account.get('contribution_room',np.inf)
 
         for m in range(BW-1): # project forward
             amount = account.get("ratio", 0) * income[m]
             # monthly contributions
-            if balance[m] < account.get('max_value',pd.np.inf) and contribution.sum() < contrib_room :
+            if balance[m] < account.get('max_value',np.inf) and contribution.sum() < contrib_room :
                 contribution[m] += amount
                 balance[m:] += amount
             else: # add to another account (just unregistered for now)
@@ -599,11 +600,11 @@ def calculate_cashflows(
                     tax = sum(interest[m-26:m]) * 0.5 * 0.53
                     taxes += tax
                     balance[m+1] -= tax # TODO: what's capital gains tax?
-        accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
+        accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':np.arange(len(interest))})]
 
     ### Do the unregistered account
 
-    interest = pd.np.zeros(BW)
+    interest = np.zeros(BW)
     balance = unregistered_balance
     account = unregistered
     notes = [""]*BW
@@ -616,11 +617,11 @@ def calculate_cashflows(
             tax = sum(interest[m-26:m]) * 0.5 * 0.53
             taxes += tax
             balance[m+1] -= tax # TODO: what's capital gains tax?
-    accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
+    accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':np.arange(len(interest))})]
 
     cfs = pd.concat(accts, sort=False)
 
-    import dateutil
+    import dateutil.relativedelta
     def add_weeks(save_df):
         save_df.index.name = 'biweek'
         save_df['date'] = [datetime.date.today() + dateutil.relativedelta.relativedelta(weeks=int(2*m)) for m in save_df.index.values]

@@ -1,0 +1,23 @@
+[project]
+name = "savings"
+version = "0.1.0"
+description = "A quick and dirty calculator for expected returns from simple investments over time"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dash>=4.4.1",
+    "gunicorn>=26.2.0",
+    "numpy>=2.0",
+    "pandas>=3.0.6",
+    "plotly>=7.1.0",
+    "python-dateutil>=2.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "jupyter",
+    "jupytext",
+]
+
+[tool.uv]
+package = false

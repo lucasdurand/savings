@@ -1,0 +1,12 @@
+# Files not uploaded by `gcloud app deploy` (App Engine installs from requirements.txt)
+.gcloudignore
+.git
+.gitignore
+.venv/
+.python-version
+__pycache__/
+*.ipynb
+calculator.py
+dynamic.py
+pyproject.toml
+uv.lock
