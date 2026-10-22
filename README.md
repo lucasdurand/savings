@@ -12,7 +12,7 @@ The `.py` files are [jupytext](https://jupytext.readthedocs.io/) pairs of the no
 
 ## Deployment
 
-Pushes to `master` deploy automatically via the [Deploy to App Engine](.github/workflows/deploy.yml) GitHub Actions workflow, which needs a `GCP_SA_KEY` Actions secret (a service-account key JSON for the `ladders-dash` project). To deploy by hand:
+Pushes to `main` deploy automatically via the [Deploy to App Engine](.github/workflows/deploy.yml) GitHub Actions workflow. Pushes to `develop` upload a preview version that gets no traffic, at https://develop-dot-savings-dot-ladders-dash.uc.r.appspot.com. The workflow needs a `GCP_SA_KEY` Actions secret (a service-account key JSON for the `ladders-dash` project). To deploy by hand:
 
 The app runs on [Google App Engine](https://cloud.google.com/appengine/docs/standard/python3) standard (F1 instance, scales to zero, within the free tier), as the `savings` service.
 
