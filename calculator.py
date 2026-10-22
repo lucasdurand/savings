@@ -50,6 +50,7 @@ print(len(interest)/12, " years")
 # # Multiple Accounts
 
 # %%
+import numpy as np
 import pandas as pd
 import datetime
 
@@ -105,21 +106,21 @@ accounts = [{'name':account['name'] for account in accounts_definition}]
 # ## project cashflows
 
 # %%
-unregistered_balance = pd.np.ones(M)*unregistered.get('starting_balance',0)
+unregistered_balance = np.ones(M)*unregistered.get('starting_balance',0)
 unregsitered_rate = unregistered.get('rate',0)
 
 # %%
 accts = []
 for account in accounts_definition:
-    balance = pd.np.ones(M)*account['starting_balance']
-    interest = pd.np.zeros(M)
+    balance = np.ones(M)*account['starting_balance']
+    interest = np.zeros(M)
     notes = [""]*M
     
     monthly_contrib = account.get('monthly_contribution',0)
-    contrib_room = account.get('contribution_room',pd.np.inf)
+    contrib_room = account.get('contribution_room',np.inf)
     for m in range(M-1): # project forward
         # monthly contributions
-        if balance[m] < account.get('max_value',pd.np.inf) and monthly_contrib*m < contrib_room :
+        if balance[m] < account.get('max_value',np.inf) and monthly_contrib*m < contrib_room :
             balance[m:] += monthly_contrib
         else: # add to another account (just unregistered for now)
             notes[m]= "Contrib Limit"
@@ -131,13 +132,13 @@ for account in accounts_definition:
             if not account.get('registered'):
                 notes[m+1] = "Taxes!"
                 balance[m+1] -= sum(interest[m-12:m]) * 0.4 # TODO: what's capital gains tax?
-    accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'month':pd.np.arange(len(interest))})]
+    accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'month':np.arange(len(interest))})]
 
 # %% [markdown]
 # ### Do the unregistered account
 
 # %%
-interest = pd.np.zeros(M)
+interest = np.zeros(M)
 balance = unregistered_balance
 account = unregistered
 notes = [""]*M
@@ -148,13 +149,13 @@ for m in range(M-1): # project forward
     if m and m%12 == 0: # TAXES
         notes[m+1] = "Taxes!"
         balance[m+1] -= sum(interest[m-12:m]) * 0.3 # TODO: what's capital gains tax?
-accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'month':pd.np.arange(len(interest))})]
+accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'month':np.arange(len(interest))})]
 
 # %%
 cfs = pd.concat(accts, sort=False)
 
 # %%
-import dateutil
+import dateutil.relativedelta
 
 def add_months(save_df):
     save_df.index.name = 'month'
@@ -244,21 +245,21 @@ accounts = [{'name':account['name'] for account in accounts_definition}]
 # ## project cashflows
 
 # %%
-unregistered_balance = pd.np.ones(BW)*unregistered.get('starting_balance',0)
+unregistered_balance = np.ones(BW)*unregistered.get('starting_balance',0)
 unregsitered_rate = unregistered.get('rate',0)
 
 # %%
 accts = []
 for account in accounts_definition:
-    balance = pd.np.ones(BW)*account['starting_balance']
-    interest = pd.np.zeros(BW)
+    balance = np.ones(BW)*account['starting_balance']
+    interest = np.zeros(BW)
     notes = [""]*BW
     
     monthly_contrib = account.get('monthly_contribution',0)
-    contrib_room = account.get('contribution_room',pd.np.inf)
+    contrib_room = account.get('contribution_room',np.inf)
     for m in range(BW-1): # project forward
         # monthly contributions
-        if balance[m] < account.get('max_value',pd.np.inf) and monthly_contrib*m < contrib_room :
+        if balance[m] < account.get('max_value',np.inf) and monthly_contrib*m < contrib_room :
             balance[m:] += monthly_contrib
         else: # add to another account (just unregistered for now)
             notes[m]= "Contrib Limit"
@@ -270,13 +271,13 @@ for account in accounts_definition:
             if not account.get('registered'):
                 notes[m+1] = "Taxes!"
                 balance[m+1] -= sum(interest[m-26:m]) * 0.4 # TODO: what's capital gains tax?
-    accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
+    accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':np.arange(len(interest))})]
 
 # %% [markdown]
 # ### Do the unregistered account
 
 # %%
-interest = pd.np.zeros(BW)
+interest = np.zeros(BW)
 balance = unregistered_balance
 account = unregistered
 notes = [""]*BW
@@ -287,12 +288,12 @@ for m in range(BW-1): # project forward
     if m and m%26 == 0: # TAXES
         notes[m+1] = "Taxes!"
         balance[m+1] -= sum(interest[m-26:m]) * 0.3 # TODO: what's capital gains tax?
-accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
+accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':np.arange(len(interest))})]
 
 # %%
 cfs = pd.concat(accts, sort=False)
 
-import dateutil
+import dateutil.relativedelta
 def add_weeks(save_df):
     save_df.index.name = 'biweek'
     save_df['date'] = [datetime.date.today() + dateutil.relativedelta.relativedelta(weeks=int(2*m)) for m in save_df.index.values]

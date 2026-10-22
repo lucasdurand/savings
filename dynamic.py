@@ -19,6 +19,7 @@
 # We really don't save money this way (defined amounts every month). In reality we would be better to set up a budget and allocate any leftover money to savings that is above and beyond our spending habits.
 
 # %%
+import numpy as np
 import pandas as pd
 import datetime
 
@@ -86,7 +87,7 @@ accounts = {'name':account['name'] for account in accounts_definition}
 # Pure salary income, with option for it to grow annualy
 
 # %%
-income = pd.np.ones(BW)*me.get("biweekly_income")
+income = np.ones(BW)*me.get("biweekly_income")
 for year in range(BW//26):
     if me.get("salary_cap_pct") and (1 + me.get("salary_cap_pct")) * me.get("biweekly_income") < income[year*26]:
         break
@@ -99,15 +100,15 @@ for year in range(BW//26):
 # How is this distributed to the accounts
 
 # %%
-unregistered_balance = pd.np.ones(BW)*unregistered.get('starting_balance',0)
+unregistered_balance = np.ones(BW)*unregistered.get('starting_balance',0)
 unregsitered_rate = unregistered.get('rate',0)
 
 # %% [markdown]
 # go through time, do all accounts each step
 
 # %%
-spending = pd.np.ones(BW) * me.get("biweekly_spend",0)
-rent = pd.np.ones(BW) * me.get("monthly_rent",0) * 12/26 # biweekly rent?
+spending = np.ones(BW) * me.get("biweekly_spend",0)
+rent = np.ones(BW) * me.get("monthly_rent",0) * 12/26 # biweekly rent?
 
 income -= spending + rent # this is our takehome
 
@@ -127,17 +128,17 @@ for account in accounts_definition:
 # %%
 accts = []
 for account in accounts_definition:
-    balance = pd.np.ones(BW)*account['starting_balance']
-    contribution = pd.np.zeros(BW)
-    interest = pd.np.zeros(BW)
+    balance = np.ones(BW)*account['starting_balance']
+    contribution = np.zeros(BW)
+    interest = np.zeros(BW)
     notes = [""]*BW
     
-    contrib_room = account.get('contribution_room',pd.np.inf)
+    contrib_room = account.get('contribution_room',np.inf)
     
     for m in range(BW-1): # project forward
         amount = account.get("ratio") * income[m]
         # monthly contributions
-        if balance[m] < account.get('max_value',pd.np.inf) and contribution.sum() < contrib_room :
+        if balance[m] < account.get('max_value',np.inf) and contribution.sum() < contrib_room :
             contribution[m] += amount
             balance[m:] += amount
         else: # add to another account (just unregistered for now)
@@ -150,13 +151,13 @@ for account in accounts_definition:
             if not account.get('registered'):
                 notes[m+1] = "Taxes!"
                 balance[m+1] -= sum(interest[m-26:m]) * 0.4 # TODO: what's capital gains tax?
-    accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
+    accts += [pd.DataFrame({'acct':account['name'],'note':notes,'interest':interest,'balance':balance,'biweek':np.arange(len(interest))})]
 
 # %% [markdown]
 # ### Do the unregistered account
 
 # %%
-interest = pd.np.zeros(BW)
+interest = np.zeros(BW)
 balance = unregistered_balance
 account = unregistered
 notes = [""]*BW
@@ -167,12 +168,12 @@ for m in range(BW-1): # project forward
     if m and m%26 == 0: # TAXES
         notes[m+1] = "Taxes!"
         balance[m+1] -= sum(interest[m-26:m]) * 0.3 # TODO: what's capital gains tax?
-accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':pd.np.arange(len(interest))})]
+accts += [pd.DataFrame({'acct':account['name'],'interest':interest,'balance':balance,'biweek':np.arange(len(interest))})]
 
 # %%
 cfs = pd.concat(accts, sort=False)
 
-import dateutil
+import dateutil.relativedelta
 def add_weeks(save_df):
     save_df.index.name = 'biweek'
     save_df['date'] = [datetime.date.today() + dateutil.relativedelta.relativedelta(weeks=int(2*m)) for m in save_df.index.values]
