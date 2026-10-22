@@ -12,6 +12,8 @@ The `.py` files are [jupytext](https://jupytext.readthedocs.io/) pairs of the no
 
 ## Deployment
 
+Pushes to `master` deploy automatically via the [Deploy to App Engine](.github/workflows/deploy.yml) GitHub Actions workflow, which needs a `GCP_SA_KEY` Actions secret (a service-account key JSON for the `ladders-dash` project). To deploy by hand:
+
 The app runs on [Google App Engine](https://cloud.google.com/appengine/docs/standard/python3) standard (F1 instance, scales to zero, within the free tier), as the `savings` service.
 
 1. Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install), then `gcloud init` and pick your project
